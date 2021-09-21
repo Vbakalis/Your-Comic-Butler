@@ -7,8 +7,7 @@ import logging
 import smtplib
 
 from email.mime.multipart import MIMEMultipart
-from datetime import date, datetime, timedelta
-from dateutil import relativedelta
+from datetime import  datetime, timedelta
 from email.mime.text import MIMEText
 from functools import wraps
 
@@ -41,17 +40,27 @@ def guard(fn):
     return wrapper
 
 
+async def everyone_is_informed(informed):
+    with open("subscribers.json", "r") as jsonFile:
+        data = json.load(jsonFile)
+    data["is_informed"] = informed
+    with open("subscribers.json", "w") as jsonFile:
+        json.dump(data, jsonFile, indent=4)
+
+
 async def month_changed():
     tomorrows_month = (datetime.today() + timedelta(days=1)).month
     tomorrows_month = calendar.month_name[tomorrows_month]
-    todays_month =  await get_next_month()
+    todays_month =  await get_next_month("%B")
     return True if tomorrows_month != todays_month else False
+
 
 async def fetch_subs():
     with open("subscribers.json", "r") as subs:
         subs = subs.read()
     subscribers = json.loads(subs)
     return subscribers
+
 
 async def email_parts():
     date_url = await url_date()
@@ -99,20 +108,25 @@ async def new_catalogue():
     async with aiohttp.ClientSession() as session:
         async with session.get(cataloge_url, verify_ssl=False) as resp:
             if resp.status == 200:
-                logging.info("Found new catalogue")
                 return True
-            logging.info("New catalogue isn't out yet")
             return False
 
 @guard
 async def main():
     logging.info("The Comic Butler is starting...")
+    has_month_changed = await month_changed()
+    if not has_month_changed:
+        await everyone_is_informed(False)
     new_catalog = await new_catalogue()
     subscribers = await fetch_subs()
-    await send_email("vasilis.mbakalis@gmail.com")
-    if new_catalog and not month_changed:
+    informed = subscribers["is_informed"]
+    if new_catalog and not informed:
         for subscriber in subscribers["subs_info"]:
             await send_email(subscriber["email"])
+        await everyone_is_informed(True)
+        logging.info("Found new catalogue")
+    else:
+        logging.info("New catalogue isn't out yet")
     logging.info("The Comic Butler is finished...")
 
 
