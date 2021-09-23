@@ -66,12 +66,14 @@ async def email_parts():
     date_url = await url_date()
     todays_month = await get_next_month("%B")
     catalogue_url = await construct_catalogue_url(BASE_URL, date_url)
-    with open("new_catalogue_email_parts.json", "r") as parts:
+    with open("email_parts.json", "r") as parts:
         parts = parts.read()
     json_email_parts = json.loads(parts)
-    body = json_email_parts["parts"]["body"].format(link=catalogue_url, month=todays_month)
+    body = json_email_parts["parts"]["new_catalogue_email"]["body"].format(
+        link=catalogue_url, month=todays_month)
     sender = os.getenv("COMIC_BUTLER_EMAIL")
-    title = json_email_parts["parts"]["subject"].format(month=todays_month)
+    title = json_email_parts["parts"]["new_catalogue_email"]["subject"].format(
+        month=todays_month)
     return body, sender, title
 
 
