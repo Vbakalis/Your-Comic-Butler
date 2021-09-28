@@ -47,11 +47,10 @@ async def everyone_is_informed(informed):
     with open("subscribers.json", "w") as jsonFile:
         json.dump(data, jsonFile, indent=4)
 
-
 async def month_changed():
     tomorrows_month = (datetime.today() + timedelta(days=1)).month
     tomorrows_month = calendar.month_name[tomorrows_month]
-    todays_month =  await get_next_month("%B")
+    todays_month = get_next_month("%B")
     return True if tomorrows_month != todays_month else False
 
 
@@ -64,8 +63,8 @@ async def fetch_subs():
 
 async def email_parts():
     date_url = await url_date()
-    todays_month = await get_next_month("%B")
-    catalogue_url = await construct_catalogue_url(BASE_URL, date_url)
+    todays_month = get_next_month("%B")
+    catalogue_url = construct_catalogue_url(BASE_URL, date_url)
     with open("email_parts.json", "r") as parts:
         parts = parts.read()
     json_email_parts = json.loads(parts)
@@ -99,16 +98,16 @@ async def send_email(receiver):
 
 
 async def url_date():
-    next_month_date = await get_next_month("%b%y")
+    next_month_date = get_next_month("%b%y")
     return next_month_date
 
 
 async def new_catalogue():
     date_url = await url_date()
-    cataloge_url = await construct_catalogue_url(BASE_URL, date_url)
-    logging.info("Checking for the new Catalague...")
+    cataloge_url = construct_catalogue_url(BASE_URL, date_url)
+    logging.info("Checking for the new Catalogue...")
     async with aiohttp.ClientSession() as session:
-        async with session.get(cataloge_url, verify_ssl=False) as resp:
+        async with session.get(cataloge_url) as resp:
             if resp.status == 200:
                 return True
             return False
