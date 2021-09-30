@@ -48,10 +48,14 @@ async def everyone_is_informed(informed):
         json.dump(data, jsonFile, indent=4)
 
 async def month_changed():
-    tomorrows_month = (datetime.today() + timedelta(days=1)).month
-    tomorrows_month = calendar.month_name[tomorrows_month]
-    todays_month = get_next_month("%B")
-    return True if tomorrows_month != todays_month else False
+    # tomorrows_month = (datetime.today() + timedelta(days=1)).month
+    # tomorrows_month = calendar.month_name[tomorrows_month]
+    # todays_month = get_next_month("%B")
+    today = datetime.now()
+    if today.day == 1:
+        return True
+    return False
+    # return True if tomorrows_month != todays_month else False
 
 
 async def fetch_subs():
@@ -116,7 +120,7 @@ async def new_catalogue():
 async def main():
     logging.info("The Comic Butler is starting...")
     has_month_changed = await month_changed()
-    if not has_month_changed:
+    if has_month_changed:
         await everyone_is_informed(False)
     new_catalog = await new_catalogue()
     subscribers = await fetch_subs()
