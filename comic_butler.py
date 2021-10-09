@@ -1,18 +1,19 @@
 import aiohttp
 import asyncio
-import calendar
 import os
 import json
 import logging
 import smtplib
 
+from sqlalchemy import create_engine,engine, MetaData, Table, Column, Integer, String
 from email.mime.multipart import MIMEMultipart
-from datetime import  datetime, timedelta
+from datetime import  datetime
 from email.mime.text import MIMEText
 from functools import wraps
+from email.message import EmailMessage
 
 from util import construct_catalogue_url, get_next_month
-
+from subscribers import fetch_emails, is_informed, is_everyone_informed
 
 BASE_URL = "https://www.previewsworld.com/"
 
@@ -40,29 +41,14 @@ def guard(fn):
     return wrapper
 
 
-async def everyone_is_informed(informed):
-    with open("subscribers.json", "r") as jsonFile:
-        data = json.load(jsonFile)
-    data["is_informed"] = informed
-    with open("subscribers.json", "w") as jsonFile:
-        json.dump(data, jsonFile, indent=4)
+# async def everyone_is_informed(informed):
+#     os.environ["IS_INFORMED"] = str(informed)
 
 async def month_changed():
-    # tomorrows_month = (datetime.today() + timedelta(days=1)).month
-    # tomorrows_month = calendar.month_name[tomorrows_month]
-    # todays_month = get_next_month("%B")
     today = datetime.now()
     if today.day == 1:
         return True
     return False
-    # return True if tomorrows_month != todays_month else False
-
-
-async def fetch_subs():
-    with open("subscribers.json", "r") as subs:
-        subs = subs.read()
-    subscribers = json.loads(subs)
-    return subscribers
 
 
 async def email_parts():
@@ -121,14 +107,14 @@ async def main():
     logging.info("The Comic Butler is starting...")
     has_month_changed = await month_changed()
     if has_month_changed:
-        await everyone_is_informed(False)
+        is_everyone_informed(0)
     new_catalog = await new_catalogue()
-    subscribers = await fetch_subs()
-    informed = subscribers["is_informed"]
+    emails = fetch_emails()
+    informed = is_informed()[0]
     if new_catalog and not informed:
-        for subscriber in subscribers["subs_info"]:
-            await send_email(subscriber["email"])
-        await everyone_is_informed(True)
+        for subscriber in emails:
+            await send_email(subscriber)
+        is_everyone_informed(1)
         logging.info("Found new catalogue")
     else:
         logging.info("New catalogue isn't out yet")
@@ -137,3 +123,7 @@ async def main():
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
+
+
+
+
