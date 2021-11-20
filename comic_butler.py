@@ -5,12 +5,10 @@ import json
 import logging
 import smtplib
 
-from sqlalchemy import create_engine,engine, MetaData, Table, Column, Integer, String
 from email.mime.multipart import MIMEMultipart
 from datetime import  datetime
 from email.mime.text import MIMEText
 from functools import wraps
-from email.message import EmailMessage
 
 from util import construct_catalogue_url, get_next_month
 from subscribers import fetch_emails, is_informed, is_everyone_informed
@@ -37,12 +35,8 @@ def guard(fn):
             logging.error(
                 "%s(*%s, **%s) Exception: %s", fn.__name__, args, kwargs, err,
             )
-
     return wrapper
 
-
-# async def everyone_is_informed(informed):
-#     os.environ["IS_INFORMED"] = str(informed)
 
 async def month_changed():
     today = datetime.now()
@@ -51,17 +45,17 @@ async def month_changed():
     return False
 
 
-async def email_parts():
+async def email_parts(email_part):
     date_url = await url_date()
     todays_month = get_next_month("%B")
     catalogue_url = construct_catalogue_url(BASE_URL, date_url)
     with open("email_parts.json", "r") as parts:
         parts = parts.read()
     json_email_parts = json.loads(parts)
-    body = json_email_parts["parts"]["new_catalogue_email"]["body"].format(
+    body = json_email_parts["parts"][email_part]["body"].format(
         link=catalogue_url, month=todays_month)
     sender = os.getenv("COMIC_BUTLER_EMAIL")
-    title = json_email_parts["parts"]["new_catalogue_email"]["subject"].format(
+    title = json_email_parts["parts"][email_part]["subject"].format(
         month=todays_month)
     return body, sender, title
 
@@ -69,7 +63,7 @@ async def email_parts():
 async def send_email(receiver):
     logging.info("Sending Email to: %s...", receiver,)
     try:
-        body, sender, title = await email_parts()
+        body, sender, title = await email_parts("new_catalogue_email")
         sender_pass = os.getenv("EMAIL_PASSWORD")
         message = MIMEMultipart()
         message['From'] = sender

@@ -5,7 +5,6 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
 
-
 engine = create_engine("sqlite:///subscribers.db")
 Session = sessionmaker(bind=engine)
 session = Session()
@@ -28,10 +27,10 @@ class Subsribers(Base):
 subscribers = session.query(Subsribers).all()
 
 def fetch_emails():
-    email = []
+    emails = []
     for subscriber in subscribers:
-        email.append(subscriber.email)
-    return email
+        emails.append(subscriber.email)
+    return emails
 
 def is_informed():
     informed = []
@@ -43,4 +42,9 @@ def is_everyone_informed(informed):
     info = session.query(Subsribers).first()
     info.informed = informed
     session.add(info)
+    session.commit()
+
+def add_subscriber_to_db(new_sub_info):
+    new_subscriber = Subsribers(first_name = new_sub_info[1], last_name = new_sub_info[2], email = new_sub_info[0], informed = False)
+    session.add(new_subscriber)
     session.commit()
