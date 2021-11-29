@@ -1,6 +1,6 @@
 import sqlalchemy
 
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Boolean, event
+from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -45,6 +45,6 @@ def is_everyone_informed(informed):
     session.commit()
 
 def add_subscriber_to_db(new_sub_info):
-    new_subscriber = Subsribers(first_name = new_sub_info[1], last_name = new_sub_info[2], email = new_sub_info[0], informed = False)
+    new_subscriber = Subsribers(first_name = new_sub_info[1], last_name = new_sub_info[2], email = new_sub_info[0], informed = 0)
     session.add(new_subscriber)
     session.commit()

@@ -2,7 +2,6 @@ import aiohttp
 import asyncio
 import email
 import imaplib
-import mailbox
 import os
 import logging
 import smtplib
@@ -10,7 +9,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from comic_butler import email_parts
+from util import email_parts
 from subscribers import fetch_emails, add_subscriber_to_db
 logging.basicConfig(
     format="%(asctime)s %(levelname)-10s %(message)s",
@@ -27,7 +26,7 @@ logging.basicConfig(
 async def send_verification_email(subscriber):
     logging.info("Sending Email to: %s...", subscriber,)
     try:
-        body, sender, title = await email_parts("welcome_email")
+        body, sender, title = email_parts("welcome_email")
         sender_pass = os.getenv("EMAIL_PASSWORD")
         message = MIMEMultipart()
         message['From'] = sender
@@ -67,17 +66,15 @@ async def check_inbox():
             email.header.decode_header(email_message['To'])))
         subject = str(email.header.make_header(
             email.header.decode_header(email_message['Subject'])))
-        print(subject, email_from)
-        if "subscribe" in subject and not await is_email_in_db(email_from):
-            logging.info("New subscriber has been found %s",email_from)
-            await send_verification_email(email_from)
-            add_subscriber_to_db(await extract_subsriber_email(email_from))
+        sub_email, firstname, lastname = await extract_subsriber_email(email_from)
+        if "subscribe" in subject.lower() and not await is_email_in_db(sub_email):
+            logging.info("New subscriber has been found %s",sub_email)
+            await send_verification_email(sub_email)
+            add_subscriber_to_db((sub_email, firstname, lastname))
 
 async def extract_subsriber_email(subscriber):
-    email = subscriber.split("<")[1].split(">")[0]
-    name = subscriber.split("<")[0].split(">")[0]
-    firstname = name.split(" ")[0]
-    lastname = name.split(" ")[1]
+    email = subscriber.split()[2].strip(">").strip("<")
+    firstname, lastname = subscriber.split()[0], subscriber.split()[1]
     return email, firstname, lastname
 
 async def is_email_in_db(email_from):
