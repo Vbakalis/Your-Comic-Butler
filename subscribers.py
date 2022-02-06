@@ -48,3 +48,8 @@ def add_subscriber_to_db(new_sub_info):
     new_subscriber = Subsribers(first_name = new_sub_info[1], last_name = new_sub_info[2], email = new_sub_info[0], informed = 0)
     session.add(new_subscriber)
     session.commit()
+
+def remove_subscriber_from_db(new_sub_info):
+    deleted_subscriber = Subsribers(first_name=new_sub_info[1], last_name=new_sub_info[2], email=new_sub_info[0], informed=0)
+    session.delete(deleted_subscriber)
+    session.commit()

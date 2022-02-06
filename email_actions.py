@@ -23,10 +23,10 @@ logging.basicConfig(
 
 
 
-async def send_verification_email(subscriber):
+async def send_verification_email(subscriber, mail_category):
     logging.info("Sending Email to: %s...", subscriber,)
     try:
-        body, sender, title = email_parts("welcome_email")
+        body, sender, title = email_parts(mail_category)
         sender_pass = os.getenv("EMAIL_PASSWORD")
         message = MIMEMultipart()
         message['From'] = sender
@@ -69,8 +69,11 @@ async def check_inbox():
         sub_email, firstname, lastname = await extract_subsriber_email(email_from)
         if "subscribe" in subject.lower() and not await is_email_in_db(sub_email):
             logging.info("New subscriber has been found %s",sub_email)
-            await send_verification_email(sub_email)
+            await send_verification_email(sub_email, "welcome_email")
             add_subscriber_to_db((sub_email, firstname, lastname))
+        elif "unsubscribe" in subject.lower() and await is_email_in_db(sub_email):
+            await send_verification_email(sub_email, "unsubscribe_email")
+
 
 async def extract_subsriber_email(subscriber):
     email = subscriber.split()[2].strip(">").strip("<")

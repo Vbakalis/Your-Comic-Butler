@@ -6,7 +6,7 @@ import logging
 import smtplib
 
 from email.mime.multipart import MIMEMultipart
-from datetime import  datetime
+from datetime import  date, datetime
 from email.mime.text import MIMEText
 from functools import wraps
 
